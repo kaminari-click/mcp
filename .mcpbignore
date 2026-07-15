@@ -1,0 +1,17 @@
+src/
+tests/
+node_modules/
+coverage/
+dist/
+scripts/
+.github/
+*.config.ts
+*.config.js
+tsconfig*.json
+package-lock.json
+.env*
+.prettierrc.json
+.prettierignore
+.gitignore
+server.json
+Readme.md

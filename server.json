@@ -1,0 +1,45 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "click.kaminari/mcp",
+  "title": "Kaminari Click",
+  "description": "Traffic-quality statistics, saved/shared reports, and IP/UA reference databases from Kaminari Click.",
+  "websiteUrl": "https://kaminari.click",
+  "repository": {
+    "url": "https://github.com/kaminari-click/mcp",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@kaminari-click/mcp",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "KAMINARI_CLICK_API_KEY",
+          "description": "API token from the Kaminari Click account settings (API section).",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "KAMINARI_CLICK_API_URL",
+          "description": "API base URL. Defaults to https://kaminari.click.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        }
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.kaminari.click/mcp"
+    }
+  ]
+}
