@@ -38,6 +38,10 @@
   "main": "./dist/bin.js",
   "sideEffects": false,
   "scripts": {
+    "sync-version": "node scripts/sync-version.mjs",
+    "prebuild": "npm run sync-version",
+    "pretest": "npm run sync-version",
+    "version": "npm run sync-version && git add src/shared/version.ts manifest.json server.json",
     "build": "tsup",
     "build:mcpb-bundle": "tsup --config tsup.mcpb.config.ts",
     "typecheck": "tsc --noEmit",

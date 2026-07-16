@@ -1,8 +1,8 @@
 /**
- * Package name and version. Hard-coded constants, asserted to match
- * `package.json` by a unit test — avoids JSON-module imports that
- * tsup would inline wholesale.
+ * Package name and version — generated from package.json by
+ * `scripts/sync-version.mjs`. Do not edit by hand; run
+ * `npm run sync-version` (or `npm version …`).
  */
 
 export const NAME = "@kaminari-click/mcp";
-export const VERSION = "0.1.0";
+export const VERSION = "0.1.1";

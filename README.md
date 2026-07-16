@@ -77,6 +77,8 @@ npm run build:mcpb-bundle           # Claude Desktop bundle -> dist-mcpb/
 npx @anthropic-ai/mcpb pack . kaminari-click-mcp.mcpb   # .mcpb archive
 ```
 
+Version lives only in `package.json`. Bump with `npm version patch|minor|major` — that runs `sync-version` and updates `src/shared/version.ts`, `manifest.json`, and `server.json` automatically. Or run `npm run sync-version` after editing `package.json` by hand.
+
 Architecture: clean layering (`domain` → `application` → `infrastructure` / `presentation`), all dependencies flow through a per-request `ToolContext`, expected errors travel as `Result<T, E>` (neverthrow). The HTTP transport is stateless — any replica can serve any request — and API tokens never appear in logs.
 
 ## Security
