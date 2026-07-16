@@ -71,13 +71,7 @@ const StatCellSchema = z
   .passthrough();
 
 /** Cell object or a primitive the API puts on rows/total (`id`, `"fullResult"`). */
-const StatRowValueSchema = z.union([
-  StatCellSchema,
-  z.string(),
-  z.number(),
-  z.boolean(),
-  z.null(),
-]);
+const StatRowValueSchema = z.union([StatCellSchema, z.string(), z.number(), z.boolean(), z.null()]);
 
 const StatDataSchema = z
   .object({

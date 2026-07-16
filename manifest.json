@@ -14,21 +14,13 @@
   "documentation": "https://github.com/kaminari-click/mcp#readme",
   "support": "https://github.com/kaminari-click/mcp/issues",
   "license": "MIT",
-  "keywords": [
-    "kaminari",
-    "antifraud",
-    "ivt",
-    "traffic-quality",
-    "statistics"
-  ],
+  "keywords": ["kaminari", "antifraud", "ivt", "traffic-quality", "statistics"],
   "server": {
     "type": "node",
     "entry_point": "dist-mcpb/index.js",
     "mcp_config": {
       "command": "node",
-      "args": [
-        "${__dirname}/dist-mcpb/index.js"
-      ],
+      "args": ["${__dirname}/dist-mcpb/index.js"],
       "env": {
         "KAMINARI_CLICK_API_KEY": "${user_config.api_key}"
       }
@@ -44,11 +36,7 @@
     }
   },
   "compatibility": {
-    "platforms": [
-      "darwin",
-      "win32",
-      "linux"
-    ],
+    "platforms": ["darwin", "win32", "linux"],
     "runtimes": {
       "node": ">=20.19.0"
     }

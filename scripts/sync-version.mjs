@@ -7,6 +7,7 @@
  * / prebuild / pretest.
  */
 
+import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -50,5 +51,12 @@ patchJson("server.json", (server) => {
     server.packages[0].version = version;
   }
 });
+
+// Keep JSON/TS layout aligned with `prettier --check` in CI.
+execFileSync(
+  "npx",
+  ["prettier", "--write", "manifest.json", "server.json", "src/shared/version.ts"],
+  { cwd: root, stdio: "inherit" }
+);
 
 process.stdout.write(`Synced ${name}@${version} → version.ts, manifest.json, server.json\n`);
