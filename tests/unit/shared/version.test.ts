@@ -16,7 +16,7 @@ describe("version constants", () => {
     const manifest = readJson("../../../manifest.json") as { version: string };
     const server = readJson("../../../server.json") as {
       version: string;
-      packages: Array<{ version: string }>;
+      packages: { version: string }[];
     };
 
     expect(NAME).toBe(pkg.name);
