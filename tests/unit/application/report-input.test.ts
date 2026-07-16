@@ -88,6 +88,7 @@ describe("buildReportQuery", () => {
       dateFrom: "2026-06-24",
       dateTo: "2026-06-30",
       mode: "diff",
+      sort: false,
     });
   });
 
@@ -99,7 +100,22 @@ describe("buildReportQuery", () => {
       compare_period: "yesterday",
       compare_mode: "percent",
     });
-    expect(buildReportQuery(input).compare).toEqual({ period: "yesterday", mode: "percent" });
+    expect(buildReportQuery(input).compare).toEqual({
+      period: "yesterday",
+      mode: "percent",
+      sort: false,
+    });
+  });
+
+  it("passes compare_sort through as compare.sort", () => {
+    const input = Schema.parse({
+      groups: ["time_day"],
+      metrics: ["bots_total"],
+      period: "today",
+      compare_period: "yesterday",
+      compare_sort: true,
+    });
+    expect(buildReportQuery(input).compare).toMatchObject({ sort: true });
   });
 
   it("omits compare when no compare fields are set", () => {

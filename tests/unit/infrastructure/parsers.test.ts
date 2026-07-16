@@ -54,6 +54,42 @@ describe("parseStatData", () => {
     expect(data.rows[0]!["bots_total"]).toMatchObject({ rawValue: 5 });
   });
 
+  it("accepts a real API row with id and fullResult total marker", () => {
+    const data = parseStatData({
+      rows: [
+        {
+          id: 0,
+          time_day: {
+            rawValue: "16.07.2026",
+            value: "16.07.2026",
+            diff: 0,
+            percent: 0,
+            compare_value: 0,
+          },
+          bots_total: {
+            rawValue: "15309620",
+            value: "15309620",
+            diff: 0,
+            percent: 0,
+            compare_value: 0,
+          },
+        },
+      ],
+      totalRows: 1,
+      page: 1,
+      perPage: 5,
+      columns: [{ field: "time_day", type: "string" }],
+      total: {
+        id: 1,
+        time_day: "fullResult",
+        bots_total: { rawValue: null, value: "15309620", diff: 0, percent: 0, compare_value: 0 },
+      },
+    })._unsafeUnwrap();
+    expect(data.rows[0]!["id"]).toBe(0);
+    expect(data.total?.["time_day"]).toBe("fullResult");
+    expect(data.total?.["bots_total"]).toMatchObject({ value: "15309620" });
+  });
+
   it("accepts a payload without total", () => {
     expect(parseStatData({ rows: [], totalRows: 0, page: 1, perPage: 50 }).isOk()).toBe(true);
   });

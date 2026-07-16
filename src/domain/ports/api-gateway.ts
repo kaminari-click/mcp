@@ -87,10 +87,17 @@ export interface StatCell {
   readonly compare_value?: unknown;
 }
 
+/**
+ * A row/total field value. Metric and group cells are `StatCell` objects;
+ * the API also emits primitives (`id` as number, group markers like
+ * `"fullResult"` in the totals row).
+ */
+export type StatRowValue = StatCell | string | number | boolean | null;
+
 /** Result of a statistics data query. */
 export interface StatDataResult {
-  readonly rows: readonly Readonly<Record<string, StatCell>>[];
-  readonly total?: Readonly<Record<string, StatCell>>;
+  readonly rows: readonly Readonly<Record<string, StatRowValue>>[];
+  readonly total?: Readonly<Record<string, StatRowValue>>;
   readonly totalRows: number;
   readonly page: number;
   readonly perPage: number;

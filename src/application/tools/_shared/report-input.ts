@@ -61,6 +61,12 @@ export const reportInputShape = {
     .enum(COMPARE_MODES)
     .optional()
     .describe("How deltas are reported: absolute diff, percent, or raw compare value."),
+  compare_sort: z
+    .boolean()
+    .optional()
+    .describe(
+      "Sort rows by comparison deltas (dashboard 'sort by diffs'). Always sent as compare.sort; default false."
+    ),
   sort_field: z.string().optional().describe("Field id to sort rows by."),
   sort_dir: z.enum(["ASC", "DESC"]).optional().describe("Sort direction, default DESC."),
 } as const;
@@ -109,6 +115,8 @@ export function buildReportQuery(input: ReportInput): ReportQuery {
             ...(input.compare_date_to !== undefined ? { dateTo: input.compare_date_to } : {}),
             ...(input.compare_period !== undefined ? { period: input.compare_period } : {}),
             mode: input.compare_mode ?? "diff",
+            // Always present — UI PHP reads compare['sort'] without isset().
+            sort: input.compare_sort ?? false,
           },
         }
       : {}),

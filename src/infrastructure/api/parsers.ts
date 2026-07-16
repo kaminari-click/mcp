@@ -70,13 +70,24 @@ const StatCellSchema = z
   })
   .passthrough();
 
-const StatDataSchema = z.object({
-  rows: z.array(z.record(StatCellSchema)),
-  total: z.record(StatCellSchema).optional(),
-  totalRows: z.coerce.number(),
-  page: z.coerce.number(),
-  perPage: z.coerce.number(),
-});
+/** Cell object or a primitive the API puts on rows/total (`id`, `"fullResult"`). */
+const StatRowValueSchema = z.union([
+  StatCellSchema,
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.null(),
+]);
+
+const StatDataSchema = z
+  .object({
+    rows: z.array(z.record(StatRowValueSchema)),
+    total: z.record(StatRowValueSchema).optional(),
+    totalRows: z.coerce.number(),
+    page: z.coerce.number(),
+    perPage: z.coerce.number(),
+  })
+  .passthrough();
 
 export function parseStatData(data: unknown): Result<StatDataResult, ApiError> {
   return parseWith(StatDataSchema as z.ZodType<StatDataResult>, data, "statistics");
