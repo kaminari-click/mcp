@@ -14,6 +14,7 @@
 import { randomUUID } from "node:crypto";
 
 import type { Clock } from "../../../domain/ports/clock.js";
+import { assertAgentBearer } from "../../../shared/agent-jwt.js";
 import { verifyS256 } from "./pkce.js";
 
 /** Authorization-code TTL. */
@@ -104,11 +105,15 @@ function escapeHtml(value: string): string {
 export function createAuthorizationServer(deps: {
   readonly issuerUrl: string;
   readonly clock: Clock;
+  readonly jwtKey?: string;
+  readonly jwtAlg?: string;
   /** Overridable in tests; production uses the default. */
   readonly maxPendingCodes?: number;
 }): AuthorizationServer {
   const issuer = deps.issuerUrl.replace(/\/+$/, "");
   const { clock } = deps;
+  const jwtKey = deps.jwtKey;
+  const jwtAlg = deps.jwtAlg ?? "HS256";
   const maxPendingCodes = deps.maxPendingCodes ?? DEFAULT_MAX_PENDING_CODES;
   const pendingCodes = new Map<string, PendingCode>();
 
@@ -192,10 +197,10 @@ export function createAuthorizationServer(deps: {
         "button{width:100%;padding:12px;background:#4548e6;color:#fff;border:0;border-radius:6px;font-size:15px;cursor:pointer}",
         "p{color:#555;font-size:14px;line-height:1.5}</style></head><body>",
         "<h2>Connect Kaminari Click</h2>",
-        "<p>Paste your API token from the Kaminari Click account settings (API section). ",
+        "<p>Paste your MCP / Agent token from the Kaminari Click account settings. ",
         "The token is passed to your AI client and is never stored by this server.</p>",
         '<form method="POST" action="/authorize">',
-        '<input type="password" name="token" placeholder="API token" required autofocus>',
+        '<input type="password" name="token" placeholder="MCP / Agent token" required autofocus>',
         hidden("client_id", query.client_id ?? ""),
         hidden("redirect_uri", query.redirect_uri ?? ""),
         hidden("state", query.state ?? ""),
@@ -222,6 +227,10 @@ export function createAuthorizationServer(deps: {
       const token = form["token"]?.trim() ?? "";
       if (token.length < 8) {
         return { kind: "error", status: 400, message: "API token looks too short." };
+      }
+      const agentCheck = assertAgentBearer(token, jwtKey, jwtAlg);
+      if (!agentCheck.ok) {
+        return { kind: "error", status: 400, message: agentCheck.error.message };
       }
       sweepExpired();
       const code = randomUUID();

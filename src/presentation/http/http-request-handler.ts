@@ -19,6 +19,7 @@ import type { RateLimiter } from "../../domain/ports/rate-limiter.js";
 import { BearerToken } from "../../domain/value-objects/bearer-token.js";
 import { newRequestId } from "../../domain/value-objects/request-id.js";
 import { createHttpApiGateway } from "../../infrastructure/api/http-api-gateway.js";
+import { assertAgentBearer } from "../../shared/agent-jwt.js";
 import type { Config } from "../../shared/config.js";
 import { createStatelessMcp } from "./create-stateless-mcp.js";
 import type { AuthorizationServer } from "./oauth/authorization-server.js";
@@ -140,6 +141,18 @@ export function createHttpRequestHandler(
         res,
         401,
         { error: "Authorization Bearer token required" },
+        { "www-authenticate": bearerChallenge }
+      );
+      return;
+    }
+
+    const rawToken = bearer.toAuthorizationHeader().slice("Bearer ".length);
+    const agentCheck = assertAgentBearer(rawToken, config.jwtKey, config.jwtAlg);
+    if (!agentCheck.ok) {
+      writeJson(
+        res,
+        401,
+        { error: agentCheck.error.message },
         { "www-authenticate": bearerChallenge }
       );
       return;

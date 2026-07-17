@@ -10,6 +10,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Config } from "../../../src/shared/config.js";
+import { signAgentJwt } from "../../fakes/sign-jwt.js";
 import { createFakeClock } from "../../fakes/fake-clock.js";
 import { createFakeLogger } from "../../fakes/fake-logger.js";
 
@@ -27,6 +28,9 @@ const { createAuthorizationServer } = await import(
   "../../../src/presentation/http/oauth/authorization-server.js"
 );
 
+const JWT_KEY = "errors-test-secret";
+const AGENT_TOKEN = signAgentJwt(1, JWT_KEY);
+
 const config: Config = {
   transport: "http",
   apiBaseUrl: "https://api.test",
@@ -35,6 +39,8 @@ const config: Config = {
   httpPort: 0,
   rateLimitRpm: 120,
   stdioApiKey: undefined,
+  jwtKey: JWT_KEY,
+  jwtAlg: "HS256",
   oauthProtectedResource: "https://mcp.example.com/mcp",
   oauthProtectedResourceMetadataUrl: "https://mcp.example.com/.well-known/oauth-protected-resource",
   oauthIssuerUrl: "https://mcp.example.com",
@@ -82,6 +88,7 @@ function makeHandler(): ReturnType<typeof createHttpRequestHandler> {
     authServer: createAuthorizationServer({
       issuerUrl: config.oauthIssuerUrl,
       clock: createFakeClock(),
+      jwtKey: JWT_KEY,
     }),
   });
 }
@@ -103,7 +110,7 @@ describe("http-request-handler error paths", () => {
     const handler = makeHandler();
     const res = makeRes();
     await handler(
-      makeReq("POST", "/mcp", { authorization: "Bearer tenant-token" }),
+      makeReq("POST", "/mcp", { authorization: `Bearer ${AGENT_TOKEN}` }),
       res as unknown as ServerResponse
     );
     expect(res.statusCode).toBe(500);
@@ -125,7 +132,7 @@ describe("http-request-handler error paths", () => {
     const handler = makeHandler();
     const res = makeRes();
     await handler(
-      makeReq("POST", "/mcp", { authorization: "Bearer tenant-token" }),
+      makeReq("POST", "/mcp", { authorization: `Bearer ${AGENT_TOKEN}` }),
       res as unknown as ServerResponse
     );
     expect(res.statusCode).toBe(200);
@@ -146,7 +153,7 @@ describe("http-request-handler error paths", () => {
     const handler = makeHandler();
     const res = makeRes();
     await handler(
-      makeReq("POST", "/mcp", { authorization: "Bearer tenant-token" }),
+      makeReq("POST", "/mcp", { authorization: `Bearer ${AGENT_TOKEN}` }),
       res as unknown as ServerResponse
     );
     expect(res.statusCode).toBe(500);

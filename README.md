@@ -8,7 +8,7 @@ Official [Model Context Protocol](https://modelcontextprotocol.io) server for [K
 
 ## Quick start
 
-1. Generate an API token in the Kaminari Click account settings (API section).
+1. Generate an **MCP / Agent token** in the Kaminari Click account settings (separate from the regular API token).
 2. Add the server to your client.
 
 ### Cursor / Claude Code / any stdio client
@@ -20,12 +20,14 @@ Official [Model Context Protocol](https://modelcontextprotocol.io) server for [K
       "command": "npx",
       "args": ["-y", "@kaminari-click/mcp"],
       "env": {
-        "KAMINARI_CLICK_API_KEY": "<your-api-token>"
+        "KAMINARI_CLICK_API_KEY": "<mcp-agent-token>"
       }
     }
   }
 }
 ```
+
+Use an **MCP / Agent token** from Account Settings — regular API tokens are rejected. Optionally set `KAMINARI_CLICK_JWT_KEY` (same as UI `AUTH_JWTKEY`) on self-hosted deployments to verify JWT signatures locally.
 
 ### Claude Desktop
 
@@ -58,13 +60,14 @@ In HTTP mode every request must carry `Authorization: Bearer <api-token>`; the `
 
 All variables are prefixed `KAMINARI_CLICK_` — see [.env.example](.env.example). Key ones:
 
-| Variable                        | Default                  | Notes                                          |
-| ------------------------------- | ------------------------ | ---------------------------------------------- |
-| `KAMINARI_CLICK_API_KEY`        | —                        | Required in stdio mode; forbidden in http mode |
-| `KAMINARI_CLICK_API_URL`        | `https://kaminari.click` | API base URL                                   |
-| `KAMINARI_CLICK_TRANSPORT`      | `stdio`                  | `stdio` or `http` (also `--transport=` flag)   |
-| `KAMINARI_CLICK_HTTP_PORT`      | `8080`                   | HTTP mode listen port                          |
-| `KAMINARI_CLICK_RATE_LIMIT_RPM` | `120`                    | Per-token rate limit in HTTP mode              |
+| Variable                        | Default                  | Notes                                                             |
+| ------------------------------- | ------------------------ | ----------------------------------------------------------------- |
+| `KAMINARI_CLICK_API_KEY`        | —                        | MCP / Agent token; required in stdio; forbidden in http           |
+| `KAMINARI_CLICK_JWT_KEY`        | —                        | Optional; UI `AUTH_JWTKEY` — verify agent JWT signatures when set |
+| `KAMINARI_CLICK_API_URL`        | `https://kaminari.click` | API base URL                                                      |
+| `KAMINARI_CLICK_TRANSPORT`      | `stdio`                  | `stdio` or `http` (also `--transport=` flag)                      |
+| `KAMINARI_CLICK_HTTP_PORT`      | `8080`                   | HTTP mode listen port                                             |
+| `KAMINARI_CLICK_RATE_LIMIT_RPM` | `120`                    | Per-token rate limit in HTTP mode                                 |
 
 ## Development
 

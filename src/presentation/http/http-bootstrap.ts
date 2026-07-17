@@ -28,7 +28,12 @@ export async function bootstrapHttp(config: Config): Promise<number> {
 
   const clock = createSystemClock();
   const rateLimiter = createLeakyBucketRateLimiter(clock, config.rateLimitRpm);
-  const authServer = createAuthorizationServer({ issuerUrl: config.oauthIssuerUrl, clock });
+  const authServer = createAuthorizationServer({
+    issuerUrl: config.oauthIssuerUrl,
+    clock,
+    jwtKey: config.jwtKey,
+    jwtAlg: config.jwtAlg,
+  });
 
   const handle = createHttpRequestHandler({ config, logger, rateLimiter, authServer });
 

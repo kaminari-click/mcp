@@ -6,14 +6,24 @@ import {
 } from "../../../src/presentation/http/oauth/authorization-server.js";
 import { computeS256Challenge } from "../../../src/presentation/http/oauth/pkce.js";
 import { createFakeClock, type FakeClock } from "../../fakes/fake-clock.js";
+import { signAgentJwt, signPersonalJwt } from "../../fakes/sign-jwt.js";
 
 const ISSUER = "https://mcp.example.com";
 const REDIRECT = "https://client.example.com/callback";
 const VERIFIER = "verifier-string-that-is-long-enough";
+const JWT_KEY = "oauth-test-secret";
+const AGENT_TOKEN = signAgentJwt(1, JWT_KEY);
 
 function makeServer(): { server: AuthorizationServer; clock: FakeClock } {
   const clock = createFakeClock();
-  return { server: createAuthorizationServer({ issuerUrl: `${ISSUER}/`, clock }), clock };
+  return {
+    server: createAuthorizationServer({
+      issuerUrl: `${ISSUER}/`,
+      clock,
+      jwtKey: JWT_KEY,
+    }),
+    clock,
+  };
 }
 
 function authorize(server: AuthorizationServer, overrides: Record<string, string> = {}): string {
@@ -23,7 +33,7 @@ function authorize(server: AuthorizationServer, overrides: Record<string, string
     state: "st4te",
     code_challenge: computeS256Challenge(VERIFIER),
     code_challenge_method: "S256",
-    token: "my-api-token-value",
+    token: AGENT_TOKEN,
     ...overrides,
   });
   if (result.kind !== "redirect") throw new Error(`expected redirect, got ${result.message}`);
@@ -145,7 +155,7 @@ describe("authorize submit", () => {
       state: "st4te",
       code_challenge: computeS256Challenge(VERIFIER),
       code_challenge_method: "S256",
-      token: "my-api-token-value",
+      token: AGENT_TOKEN,
     });
     expect(result.kind).toBe("redirect");
     if (result.kind !== "redirect") return;
@@ -163,10 +173,23 @@ describe("authorize submit", () => {
       state: "",
       code_challenge: computeS256Challenge(VERIFIER),
       code_challenge_method: "S256",
-      token: "my-api-token-value",
+      token: AGENT_TOKEN,
     });
     if (result.kind !== "redirect") throw new Error("expected redirect");
     expect(new URL(result.location).searchParams.has("state")).toBe(false);
+  });
+
+  it("rejects a personal API token without isAgent", () => {
+    const { server } = makeServer();
+    const result = server.submitAuthorize({
+      client_id: "client-1",
+      redirect_uri: REDIRECT,
+      state: "st4te",
+      code_challenge: computeS256Challenge(VERIFIER),
+      code_challenge_method: "S256",
+      token: signPersonalJwt(1, JWT_KEY),
+    });
+    expect(result.kind).toBe("error");
   });
 
   it("rejects a too-short token and invalid request fields", () => {
@@ -188,7 +211,12 @@ describe("authorize submit", () => {
 describe("pending-code cap", () => {
   it("evicts the oldest code beyond maxPendingCodes", () => {
     const clock = createFakeClock();
-    const server = createAuthorizationServer({ issuerUrl: ISSUER, clock, maxPendingCodes: 2 });
+    const server = createAuthorizationServer({
+      issuerUrl: ISSUER,
+      clock,
+      jwtKey: JWT_KEY,
+      maxPendingCodes: 2,
+    });
     const first = authorize(server);
     const second = authorize(server);
     const third = authorize(server); // sweeping happens on the next submit
@@ -222,7 +250,7 @@ describe("token exchange", () => {
       code_verifier: VERIFIER,
       redirect_uri: REDIRECT,
     });
-    expect(result).toEqual({ kind: "ok", accessToken: "my-api-token-value" });
+    expect(result).toEqual({ kind: "ok", accessToken: AGENT_TOKEN });
   });
 
   it("accepts a request without redirect_uri (public client)", () => {

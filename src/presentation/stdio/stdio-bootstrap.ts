@@ -13,6 +13,7 @@ import { BearerToken } from "../../domain/value-objects/bearer-token.js";
 import { newRequestId } from "../../domain/value-objects/request-id.js";
 import { createHttpApiGateway } from "../../infrastructure/api/http-api-gateway.js";
 import { createPinoLogger } from "../../infrastructure/logging/pino-logger.js";
+import { assertAgentBearer } from "../../shared/agent-jwt.js";
 import type { Config } from "../../shared/config.js";
 import { SERVER_INSTRUCTIONS } from "../../shared/server-instructions.js";
 import { NAME, VERSION } from "../../shared/version.js";
@@ -26,7 +27,7 @@ export async function bootstrapStdio(config: Config): Promise<number> {
   if (config.stdioApiKey === undefined) {
     logger.fatal({}, "stdio.missing_api_key");
     process.stderr.write(
-      "KAMINARI_CLICK_API_KEY is required in stdio mode. Generate a token in the Kaminari Click account settings (API section).\n"
+      "KAMINARI_CLICK_API_KEY is required in stdio mode. Generate an MCP / Agent token in the Kaminari Click account settings.\n"
     );
     return 2;
   }
@@ -36,6 +37,12 @@ export async function bootstrapStdio(config: Config): Promise<number> {
     return 2;
   }
 
+  const agentCheck = assertAgentBearer(config.stdioApiKey, config.jwtKey, config.jwtAlg);
+  if (!agentCheck.ok) {
+    logger.fatal({ error_kind: agentCheck.error.kind }, "stdio.not_agent_token");
+    process.stderr.write(`${agentCheck.error.message}\n`);
+    return 2;
+  }
   const requestId = newRequestId();
   const scopedLogger = logger.child({ request_id: requestId, bearer_hash: bearer.hash() });
   const api = createHttpApiGateway({

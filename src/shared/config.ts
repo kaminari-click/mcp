@@ -30,6 +30,14 @@ export interface Config {
   readonly rateLimitRpm: number;
   /** Set only in stdio mode; HTTP bootstrap rejects it (tenant isolation). */
   readonly stdioApiKey: string | undefined;
+  /**
+   * Optional shared HS256 secret (`AUTH_JWTKEY` on the UI). When set,
+   * agent JWTs are signature-verified; when omitted, only the `isAgent`
+   * claim is checked (UI API still verifies the token).
+   */
+  readonly jwtKey: string | undefined;
+  /** JWT signing algorithm; UI default is HS256. */
+  readonly jwtAlg: string;
   /** Public URL of the MCP endpoint (RFC 9728 `resource`). */
   readonly oauthProtectedResource: string;
   /** Public URL of this server's protected-resource metadata document. */
@@ -46,6 +54,8 @@ const RawSchema = z.object({
   KAMINARI_CLICK_HTTP_PORT: z.coerce.number().int().min(0).max(65535).default(8080),
   KAMINARI_CLICK_RATE_LIMIT_RPM: z.coerce.number().int().min(1).max(10_000).default(120),
   KAMINARI_CLICK_API_KEY: z.string().min(8).optional(),
+  KAMINARI_CLICK_JWT_KEY: z.string().min(1).optional(),
+  KAMINARI_CLICK_JWT_ALG: z.string().min(1).default("HS256"),
   KAMINARI_CLICK_OAUTH_RESOURCE: z.string().url().default("https://mcp.kaminari.click/mcp"),
   KAMINARI_CLICK_OAUTH_RESOURCE_METADATA_URL: z
     .string()
@@ -79,6 +89,8 @@ export function loadConfig(env: NodeJS.ProcessEnv): Result<Config, ConfigError> 
     httpPort: raw.KAMINARI_CLICK_HTTP_PORT,
     rateLimitRpm: raw.KAMINARI_CLICK_RATE_LIMIT_RPM,
     stdioApiKey: raw.KAMINARI_CLICK_API_KEY,
+    jwtKey: raw.KAMINARI_CLICK_JWT_KEY,
+    jwtAlg: raw.KAMINARI_CLICK_JWT_ALG,
     oauthProtectedResource: raw.KAMINARI_CLICK_OAUTH_RESOURCE,
     oauthProtectedResourceMetadataUrl: raw.KAMINARI_CLICK_OAUTH_RESOURCE_METADATA_URL,
     oauthIssuerUrl: raw.KAMINARI_CLICK_OAUTH_ISSUER_URL,

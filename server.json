@@ -8,20 +8,20 @@
     "url": "https://github.com/kaminari-click/mcp",
     "source": "github"
   },
-  "version": "0.1.1",
+  "version": "0.1.2",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@kaminari-click/mcp",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
           "name": "KAMINARI_CLICK_API_KEY",
-          "description": "API token from the Kaminari Click account settings (API section).",
+          "description": "MCP / Agent token from the Kaminari Click account settings (not the regular API token).",
           "isRequired": true,
           "isSecret": true,
           "format": "string"

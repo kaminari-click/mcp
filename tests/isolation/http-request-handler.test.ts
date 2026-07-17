@@ -16,6 +16,11 @@ import { computeS256Challenge } from "../../src/presentation/http/oauth/pkce.js"
 import type { Config } from "../../src/shared/config.js";
 import { createFakeClock } from "../fakes/fake-clock.js";
 import { createFakeLogger } from "../fakes/fake-logger.js";
+import { signAgentJwt } from "../fakes/sign-jwt.js";
+
+const JWT_KEY = "isolation-test-secret";
+const TENANT_A = signAgentJwt(1, JWT_KEY);
+const TENANT_B = signAgentJwt(2, JWT_KEY);
 
 let upstream: Server;
 let upstreamUrl = "";
@@ -52,6 +57,8 @@ beforeAll(async () => {
     httpPort: 0,
     rateLimitRpm: 120,
     stdioApiKey: undefined,
+    jwtKey: JWT_KEY,
+    jwtAlg: "HS256",
     oauthProtectedResource: "https://mcp.example.com/mcp",
     oauthProtectedResourceMetadataUrl:
       "https://mcp.example.com/.well-known/oauth-protected-resource",
@@ -73,6 +80,7 @@ beforeAll(async () => {
     authServer: createAuthorizationServer({
       issuerUrl: config.oauthIssuerUrl,
       clock: createFakeClock(),
+      jwtKey: JWT_KEY,
     }),
   });
   // Mirror the bootstrap's top-level catch (e.g. oversized bodies).
@@ -146,11 +154,23 @@ describe("tenant isolation", () => {
     expect(res.status).toBe(401);
   });
 
+  it("rejects a personal API JWT without isAgent", async () => {
+    const { signPersonalJwt } = await import("../fakes/sign-jwt.js");
+    const res = await fetch(`${mcpUrl}/mcp`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${signPersonalJwt(1, JWT_KEY)}` },
+    });
+    expect(res.status).toBe(401);
+    expect(await res.json()).toMatchObject({
+      error: expect.stringContaining("MCP / Agent token"),
+    });
+  });
+
   it("returns 429 with Retry-After when the limiter denies", async () => {
     rateLimiterAllow = false;
     const res = await fetch(`${mcpUrl}/mcp`, {
       method: "POST",
-      headers: { authorization: "Bearer tenant-a-token" },
+      headers: { authorization: `Bearer ${TENANT_A}` },
     });
     rateLimiterAllow = true;
     expect(res.status).toBe(429);
@@ -162,7 +182,7 @@ describe("tenant isolation", () => {
     rateLimiterRetryAfter = undefined;
     const res = await fetch(`${mcpUrl}/mcp`, {
       method: "POST",
-      headers: { authorization: "Bearer tenant-a-token" },
+      headers: { authorization: `Bearer ${TENANT_A}` },
     });
     rateLimiterAllow = true;
     rateLimiterRetryAfter = 1500;
@@ -181,7 +201,7 @@ describe("tenant isolation", () => {
     const init = await fetch(`${mcpUrl}/mcp`, {
       method: "POST",
       headers: {
-        authorization: "Bearer tenant-a-token",
+        authorization: `Bearer ${TENANT_A}`,
         "content-type": "application/json",
         accept: "application/json, text/event-stream",
       },
@@ -207,7 +227,7 @@ describe("tenant isolation", () => {
     const call = await fetch(`${mcpUrl}/mcp`, {
       method: "POST",
       headers: {
-        authorization: "Bearer tenant-a-token",
+        authorization: `Bearer ${TENANT_A}`,
         "content-type": "application/json",
         accept: "application/json, text/event-stream",
       },
@@ -226,7 +246,7 @@ describe("tenant isolation", () => {
 
     // The upstream saw exactly this tenant's Bearer, never anything else.
     expect(upstreamRequests).toHaveLength(1);
-    expect(upstreamRequests[0]!.authorization).toBe("Bearer tenant-a-token");
+    expect(upstreamRequests[0]!.authorization).toBe(`Bearer ${TENANT_A}`);
     expect(upstreamRequests[0]!.url).toBe("/api/stat/get");
   });
 
@@ -235,7 +255,7 @@ describe("tenant isolation", () => {
       const res = await fetch(`${mcpUrl}/mcp`, {
         method: "POST",
         headers: {
-          authorization: "Bearer tenant-a-token",
+          authorization: `Bearer ${TENANT_A}`,
           "content-type": "application/json",
           accept: "application/json, text/event-stream",
         },
@@ -260,7 +280,7 @@ describe("tenant isolation", () => {
     const res = await fetch(`${mcpUrl}/mcp`, {
       method: "POST",
       headers: {
-        authorization: "Bearer tenant-b-token",
+        authorization: `Bearer ${TENANT_B}`,
         "content-type": "application/json",
         accept: "application/json, text/event-stream",
       },
@@ -292,7 +312,7 @@ describe("OAuth flow over HTTP", () => {
     expect(await page.text()).toContain('name="token"');
 
     const form = new URLSearchParams({
-      token: "user-pasted-api-token",
+      token: TENANT_A,
       client_id,
       redirect_uri: "https://chat.example.com/cb",
       state: "xyz",
@@ -324,7 +344,7 @@ describe("OAuth flow over HTTP", () => {
     expect(token.status).toBe(200);
     expect(token.headers.get("cache-control")).toBe("no-store");
     expect(await token.json()).toEqual({
-      access_token: "user-pasted-api-token",
+      access_token: TENANT_A,
       token_type: "Bearer",
     });
   });

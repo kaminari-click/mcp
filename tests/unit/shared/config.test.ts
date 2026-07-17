@@ -14,6 +14,8 @@ describe("loadConfig", () => {
     expect(config.httpPort).toBe(8080);
     expect(config.rateLimitRpm).toBe(120);
     expect(config.stdioApiKey).toBeUndefined();
+    expect(config.jwtKey).toBeUndefined();
+    expect(config.jwtAlg).toBe("HS256");
   });
 
   it("defaults logFormat to json for http transport", () => {
@@ -37,6 +39,7 @@ describe("loadConfig", () => {
       KAMINARI_CLICK_HTTP_PORT: "9090",
       KAMINARI_CLICK_RATE_LIMIT_RPM: "60",
       KAMINARI_CLICK_API_KEY: "secret-token-value",
+      KAMINARI_CLICK_JWT_KEY: "ui-secret",
       KAMINARI_CLICK_OAUTH_RESOURCE: "https://example.com/mcp",
       KAMINARI_CLICK_OAUTH_RESOURCE_METADATA_URL:
         "https://example.com/.well-known/oauth-protected-resource",
@@ -47,6 +50,7 @@ describe("loadConfig", () => {
     expect(config.httpPort).toBe(9090);
     expect(config.rateLimitRpm).toBe(60);
     expect(config.stdioApiKey).toBe("secret-token-value");
+    expect(config.jwtKey).toBe("ui-secret");
     expect(config.oauthIssuerUrl).toBe("https://example.com");
   });
 
