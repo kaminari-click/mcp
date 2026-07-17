@@ -31,7 +31,7 @@ export async function bootstrapHttp(config: Config): Promise<number> {
   const authServer = createAuthorizationServer({
     issuerUrl: config.oauthIssuerUrl,
     clock,
-    jwtKey: config.jwtKey,
+    ...(config.jwtKey !== undefined ? { jwtKey: config.jwtKey } : {}),
     jwtAlg: config.jwtAlg,
   });
 

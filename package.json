@@ -1,6 +1,6 @@
 {
   "name": "@kaminari-click/mcp",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Official Model Context Protocol (MCP) server for Kaminari Click — traffic-quality statistics, saved reports, shared reports, and IP/UA reference databases.",
   "keywords": [
     "mcp",

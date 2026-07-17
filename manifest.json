@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "kaminari-click-mcp",
   "display_name": "Kaminari Click",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Traffic-quality statistics, saved reports, share links, and IP/UA reference databases from Kaminari Click.",
   "long_description": "Query Kaminari Click statistics (bots, IVT, conversions) grouped by time, sub IDs, geo, and device; manage and share saved reports; and check or download the IP/UA reference databases — all from your AI assistant.",
   "author": {
