@@ -47,7 +47,7 @@ describe("toApiError", () => {
     });
     expect(toApiError(401, { error: "Invalid token" }).message).toBe("Invalid token");
     expect(toApiError(404, { data: { error: "Report 7 not found" } }).message).toBe(
-      "Report 7 not found",
+      "Report 7 not found"
     );
     expect(toApiError(429, "Slow down").message).toBe("Slow down");
   });
