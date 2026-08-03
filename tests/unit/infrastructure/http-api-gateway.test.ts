@@ -78,23 +78,14 @@ describe("createHttpApiGateway", () => {
     expect(JSON.parse(captured[0]!.body!)).toEqual({ id: "geo_country", searchQuery: "uni" });
   });
 
-  it("maps HTTP errors with retry-after", async () => {
-    const { gateway } = makeGateway(() =>
-      jsonResponse({ msg: "Too many" }, 429, { "retry-after": "30" })
-    );
+  it("surfaces the server message for sub-500 errors", async () => {
+    const { gateway } = makeGateway(() => jsonResponse({ msg: "Too many" }, 429));
     const result = await gateway.listReports();
     expect(result._unsafeUnwrapErr()).toMatchObject({
-      kind: "rate-limited",
-      retryAfterMs: 30_000,
+      kind: "upstream",
+      status: 429,
+      message: "Too many",
     });
-  });
-
-  it("ignores an unparsable retry-after header", async () => {
-    const { gateway } = makeGateway(() =>
-      jsonResponse({ msg: "Too many" }, 429, { "retry-after": "soon" })
-    );
-    const result = await gateway.listReports();
-    expect("retryAfterMs" in result._unsafeUnwrapErr()).toBe(false);
   });
 
   it("handles non-JSON error bodies", async () => {
@@ -176,7 +167,7 @@ describe("createHttpApiGateway", () => {
   it("propagates verify errors", async () => {
     const { gateway } = makeGateway(() => jsonResponse({ msg: "No sub" }, 403));
     const result = await gateway.verifyDatabaseAccess("ip_bot");
-    expect(result._unsafeUnwrapErr().kind).toBe("forbidden");
+    expect(result._unsafeUnwrapErr()).toMatchObject({ kind: "upstream", message: "No sub" });
   });
 
   describe("downloadDatabase", () => {
@@ -237,13 +228,21 @@ describe("createHttpApiGateway", () => {
     it("maps JSON error bodies", async () => {
       const { gateway } = makeGateway(() => jsonResponse({ msg: "No sub" }, 403));
       const result = await gateway.downloadDatabase({ kind: "ip_bot", maxLines: 5 });
-      expect(result._unsafeUnwrapErr()).toMatchObject({ kind: "forbidden", message: "No sub" });
+      expect(result._unsafeUnwrapErr()).toMatchObject({
+        kind: "upstream",
+        status: 403,
+        message: "No sub",
+      });
     });
 
     it("maps plain-text error bodies", async () => {
       const { gateway } = makeGateway(() => new Response("Denied", { status: 403 }));
       const result = await gateway.downloadDatabase({ kind: "ip_bot", maxLines: 5 });
-      expect(result._unsafeUnwrapErr()).toMatchObject({ kind: "forbidden", message: "Denied" });
+      expect(result._unsafeUnwrapErr()).toMatchObject({
+        kind: "upstream",
+        status: 403,
+        message: "Denied",
+      });
     });
 
     it("maps network failures", async () => {

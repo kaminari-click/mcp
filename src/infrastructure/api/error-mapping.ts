@@ -29,36 +29,21 @@ export function extractApiMessage(body: unknown, fallback: string): string {
   return fallback;
 }
 
-/** Map a non-success HTTP response to a typed {@link ApiError}. */
-export function toApiError(status: number, body: unknown, retryAfterMs?: number): ApiError {
-  switch (status) {
-    case 401:
-      return {
-        kind: "unauthorized",
-        message: extractApiMessage(body, "Invalid or revoked API token."),
-      };
-    case 403:
-      return { kind: "forbidden", message: extractApiMessage(body, "Access denied.") };
-    case 404:
-      return { kind: "not-found", message: extractApiMessage(body, "Resource not found.") };
-    case 429:
-      return {
-        kind: "rate-limited",
-        message: extractApiMessage(body, "API rate limit hit."),
-        ...(retryAfterMs !== undefined ? { retryAfterMs } : {}),
-      };
-    case 400:
-    case 405:
-    case 422:
-      return {
-        kind: "invalid-input",
-        message: extractApiMessage(body, "The API rejected the request."),
-      };
-    default:
-      return {
-        kind: "upstream",
-        message: extractApiMessage(body, `API responded with HTTP ${String(status)}.`),
-        status,
-      };
+/**
+ * Map a non-success HTTP response to an {@link ApiError}.
+ *
+ * Server faults (HTTP 5xx) are deliberately opaque — their body can leak
+ * internal detail — so the agent only ever sees "Internal server error".
+ * For any other status the real server message is surfaced as-is, so the
+ * agent knows exactly what it did wrong.
+ */
+export function toApiError(status: number, body: unknown): ApiError {
+  if (status >= 500) {
+    return { kind: "upstream", message: "Internal server error", status };
   }
+  return {
+    kind: "upstream",
+    message: extractApiMessage(body, `API responded with HTTP ${String(status)}.`),
+    status,
+  };
 }

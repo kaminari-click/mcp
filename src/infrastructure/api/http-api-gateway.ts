@@ -96,12 +96,7 @@ export function createHttpApiGateway(deps: HttpApiGatewayDeps): ApiGateway {
     }
 
     if (!response.ok) {
-      const retryAfterRaw = response.headers.get("retry-after");
-      const retryAfterMs =
-        retryAfterRaw !== null && !Number.isNaN(Number(retryAfterRaw))
-          ? Number(retryAfterRaw) * 1000
-          : undefined;
-      return err(toApiError(response.status, responseBody, retryAfterMs));
+      return err(toApiError(response.status, responseBody));
     }
     return ok(responseBody);
   }

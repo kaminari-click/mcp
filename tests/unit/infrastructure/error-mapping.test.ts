@@ -39,34 +39,36 @@ describe("extractApiMessage", () => {
 });
 
 describe("toApiError", () => {
-  it("maps 401 to unauthorized", () => {
-    expect(toApiError(401, {})).toMatchObject({ kind: "unauthorized" });
-  });
-
-  it("maps 403 to forbidden", () => {
-    expect(toApiError(403, {})).toMatchObject({ kind: "forbidden" });
-  });
-
-  it("maps 404 to not-found", () => {
-    expect(toApiError(404, {})).toMatchObject({ kind: "not-found" });
-  });
-
-  it("maps 429 with and without retry-after", () => {
-    expect(toApiError(429, {}, 30_000)).toMatchObject({
-      kind: "rate-limited",
-      retryAfterMs: 30_000,
+  it("surfaces the server message as-is for statuses below 500", () => {
+    expect(toApiError(400, { msg: "Field 'from' is required" })).toMatchObject({
+      kind: "upstream",
+      status: 400,
+      message: "Field 'from' is required",
     });
-    expect("retryAfterMs" in toApiError(429, {})).toBe(false);
+    expect(toApiError(401, { error: "Invalid token" }).message).toBe("Invalid token");
+    expect(toApiError(404, { data: { error: "Report 7 not found" } }).message).toBe(
+      "Report 7 not found",
+    );
+    expect(toApiError(429, "Slow down").message).toBe("Slow down");
   });
 
-  it("maps 400/405/422 to invalid-input", () => {
-    for (const status of [400, 405, 422]) {
-      expect(toApiError(status, {})).toMatchObject({ kind: "invalid-input" });
+  it("falls back to a generic HTTP message when the body carries none", () => {
+    expect(toApiError(403, {}).message).toContain("403");
+  });
+
+  it("masks every 5xx as Internal server error without leaking the body", () => {
+    expect(toApiError(500, { error: "stack trace here" })).toMatchObject({
+      kind: "upstream",
+      status: 500,
+      message: "Internal server error",
+    });
+    expect(toApiError(502, { msg: "db down" }).message).toBe("Internal server error");
+    expect(toApiError(503, "Service Unavailable").message).toBe("Internal server error");
+  });
+
+  it("always uses the upstream kind and preserves the status", () => {
+    for (const status of [400, 401, 403, 404, 422, 429, 500, 503]) {
+      expect(toApiError(status, {})).toMatchObject({ kind: "upstream", status });
     }
-  });
-
-  it("maps everything else to upstream with status", () => {
-    expect(toApiError(502, {})).toMatchObject({ kind: "upstream", status: 502 });
-    expect(toApiError(500, {}).message).toContain("500");
   });
 });
