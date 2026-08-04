@@ -18,7 +18,7 @@ Official [Model Context Protocol](https://modelcontextprotocol.io) server for [K
   "mcpServers": {
     "kaminari-click": {
       "command": "npx",
-      "args": ["-y", "@kaminari-click/mcp"],
+      "args": ["-y", "@kaminari-click/mcp@latest"],
       "env": {
         "KAMINARI_CLICK_API_KEY": "<mcp-agent-token>"
       }
@@ -38,7 +38,7 @@ Download `kaminari-click-mcp.mcpb` from the latest release and double-click to i
 Point the connector at `https://mcp.kaminari.click/mcp`. The server implements OAuth 2.0 (authorization code + PKCE + dynamic client registration): during authorization you paste your API token once, and the client receives it as its access token. Self-hosting:
 
 ```bash
-KAMINARI_CLICK_TRANSPORT=http KAMINARI_CLICK_HTTP_PORT=8080 npx -y @kaminari-click/mcp
+KAMINARI_CLICK_TRANSPORT=http KAMINARI_CLICK_HTTP_PORT=8080 npx -y @kaminari-click/mcp@latest
 ```
 
 In HTTP mode every request must carry `Authorization: Bearer <api-token>`; the `KAMINARI_CLICK_API_KEY` env var is rejected so one tenant's token can never leak to another.
